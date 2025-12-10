@@ -13,13 +13,10 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 print("Model loaded successfully!\n")
 
-def generate_response(prompt):
-    """Generate a response for the given prompt."""
-    messages = [
-        {"role": "user", "content": prompt}
-    ]
+def generate_response(conversation_history):
+    """Generate a response for the given conversation history."""
     text = tokenizer.apply_chat_template(
-        messages,
+        conversation_history,
         tokenize=False,
         add_generation_prompt=True,
     )
@@ -43,7 +40,10 @@ def generate_response(prompt):
     thinking_content = tokenizer.decode(output_ids[:index], skip_special_tokens=False).strip("\n")
     content = tokenizer.decode(output_ids[index:], skip_special_tokens=False).strip("\n")
     
-    return thinking_content, content
+    # Return response content without thinking for history
+    content_clean = tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
+    
+    return thinking_content, content, content_clean
 
 def main():
     """Interactive chat loop."""
@@ -53,8 +53,12 @@ def main():
     print("Type your message (multiple lines supported).")
     print("Press Enter 4 times (3 empty lines) to send your message.")
     print("Type 'exit', 'quit', or 'q' on a new line to end.")
+    print("Type 'clear' to reset conversation history.")
     print("=" * 60)
     print()
+    
+    # Initialize conversation history
+    conversation_history = []
     
     while True:
         try:
@@ -74,17 +78,29 @@ def main():
                     if line.strip().lower() in ['exit', 'quit', 'q'] and not lines:
                         print("\nGoodbye!")
                         return
+                    if line.strip().lower() == 'clear' and not lines:
+                        conversation_history = []
+                        print("\nConversation history cleared!\n")
+                        print("-" * 60)
+                        print()
+                        break
                     lines.append(line)
             
             user_input = "\n".join(lines).strip()
             
-            # Skip if somehow empty
+            # Skip if somehow empty or if we just cleared history
             if not user_input:
                 continue
             
+            # Add user message to conversation history
+            conversation_history.append({"role": "user", "content": user_input})
+            
             # Generate response
             print("\nGenerating response...\n")
-            thinking, response = generate_response(user_input)
+            thinking, response, response_clean = generate_response(conversation_history)
+            
+            # Add assistant response to conversation history (without thinking)
+            conversation_history.append({"role": "assistant", "content": response_clean})
             
             # Display response
             if thinking:
@@ -98,6 +114,7 @@ def main():
             sys.exit(0)
         except Exception as e:
             print(f"\nError: {e}\n")
+            continue
             continue
 
 if __name__ == "__main__":
