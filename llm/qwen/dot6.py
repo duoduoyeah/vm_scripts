@@ -22,6 +22,12 @@ model_inputs = tokenizer([prompt], return_tensors="pt").to(model.device)
 print(f"Prompt: {prompt}\n")
 print("Generating answer...")
 
+# Add newline tokens as stop condition
+stop_strings = ["\nQ:", "\n\n"]
+stop_token_ids = [tokenizer.encode(s, add_special_tokens=False) for s in stop_strings]
+# Flatten the list
+stop_token_ids = [token_id for sublist in stop_token_ids for token_id in sublist]
+
 generated_ids = model.generate(
     **model_inputs,
     max_new_tokens=50,
@@ -35,5 +41,8 @@ generated_ids = model.generate(
 # Decode output
 output_ids = generated_ids[0][len(model_inputs.input_ids[0]):]
 response = tokenizer.decode(output_ids, skip_special_tokens=True)
+
+# Clean up response - take only the answer before any new question
+response = response.split('\n')[0].strip()
 
 print(f"\nModel response: {response}")
