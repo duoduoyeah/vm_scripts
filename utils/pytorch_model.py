@@ -2,7 +2,7 @@ import torch
 import os
 from transformers import AutoModelForCausalLM
 
-model_name = "roneneldan/TinyStories-1M"
+model_name = "Qwen/Qwen3-0.6B-Base"
 output_file = "model_tensors_info.txt"
 
 print(f"Loading model from {model_name}...")
