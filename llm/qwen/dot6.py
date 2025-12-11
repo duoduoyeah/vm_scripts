@@ -32,7 +32,10 @@ print("Generating answer...")
 
 generated_ids = model.generate(
     **model_inputs,
-    max_new_tokens=512
+    max_new_tokens=512,
+    pad_token_id=tokenizer.eos_token_id,
+    eos_token_id=tokenizer.eos_token_id,
+    do_sample=False
 )
 
 # Decode output
