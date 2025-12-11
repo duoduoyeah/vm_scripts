@@ -12,19 +12,11 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 print("Model loaded successfully!\n")
 
-# Mathematical problem prompt
-prompt = "Solve this math problem: What is 127 + 348?"
+# Mathematical problem prompt - format for base model (completion, not instruction)
+prompt = "Q: What is 127 + 348?\nA:"
 
-# Prepare input
-messages = [
-    {"role": "user", "content": prompt}
-]
-text = tokenizer.apply_chat_template(
-    messages,
-    tokenize=False,
-    add_generation_prompt=True,
-)
-model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+# Prepare input - don't use chat template for base models
+model_inputs = tokenizer([prompt], return_tensors="pt").to(model.device)
 
 # Generate response
 print(f"Prompt: {prompt}\n")
@@ -32,10 +24,12 @@ print("Generating answer...")
 
 generated_ids = model.generate(
     **model_inputs,
-    max_new_tokens=512,
+    max_new_tokens=50,
     pad_token_id=tokenizer.eos_token_id,
     eos_token_id=tokenizer.eos_token_id,
-    do_sample=False
+    do_sample=False,
+    temperature=None,
+    top_p=None
 )
 
 # Decode output
